@@ -78,8 +78,28 @@ if (isset($_POST["atualizar"])) {
     }
 }
 
-/* LISTAR PRODUTOS */
-$sql = "SELECT * FROM produtos ORDER BY id DESC";
+/* PESQUISA DE PRODUTOS */
+$pesquisa = "";
+
+if (isset($_GET["pesquisa"])) {
+    $pesquisa = trim($_GET["pesquisa"]);
+}
+
+if ($pesquisa !== "") {
+
+    $pesquisa_sql = $conexao->real_escape_string($pesquisa);
+
+    $sql = "SELECT * FROM produtos
+            WHERE codigo LIKE '%$pesquisa_sql%'
+               OR nome LIKE '%$pesquisa_sql%'
+               OR descricao LIKE '%$pesquisa_sql%'
+            ORDER BY id DESC";
+
+} else {
+
+    $sql = "SELECT * FROM produtos ORDER BY id DESC";
+}
+
 $resultado = $conexao->query($sql);
 
 ?>
@@ -326,9 +346,52 @@ $resultado = $conexao->query($sql);
 
         <div class="card-body">
 
-            <h2 class="mb-4">
-                Produtos Cadastrados
-            </h2>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <h2 class="mb-0">
+                    Produtos Cadastrados
+                </h2>
+
+            </div>
+
+            <!-- PESQUISA -->
+            <form method="GET" class="row g-2 mb-4">
+
+                <div class="col-md-9">
+
+                    <input
+                        type="text"
+                        name="pesquisa"
+                        class="form-control"
+                        placeholder="Pesquisar por código, nome ou descrição..."
+                        value="<?= htmlspecialchars($pesquisa) ?>"
+                    >
+
+                </div>
+
+                <div class="col-md-3 d-flex gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Pesquisar
+                    </button>
+
+                    <?php if ($pesquisa !== ""): ?>
+
+                        <a
+                            href="produtos.php"
+                            class="btn btn-secondary"
+                        >
+                            Limpar
+                        </a>
+
+                    <?php endif; ?>
+
+                </div>
+
+            </form>
 
             <div class="table-responsive">
 
@@ -352,56 +415,72 @@ $resultado = $conexao->query($sql);
 
                     <tbody>
 
-                        <?php while ($produto = $resultado->fetch_assoc()): ?>
+                        <?php if ($resultado && $resultado->num_rows > 0): ?>
+
+                            <?php while ($produto = $resultado->fetch_assoc()): ?>
+
+                                <tr>
+
+                                    <td>
+                                        <?= $produto["id"] ?>
+                                    </td>
+
+                                    <td>
+                                        <?= htmlspecialchars($produto["codigo"]) ?>
+                                    </td>
+
+                                    <td>
+                                        <?= htmlspecialchars($produto["nome"]) ?>
+                                    </td>
+
+                                    <td>
+                                        <?= htmlspecialchars($produto["descricao"]) ?>
+                                    </td>
+
+                                    <td>
+                                        <?= number_format($produto["peso"], 2, ",", ".") ?> kg
+                                    </td>
+
+                                    <td>
+                                        <?= $produto["quantidade"] ?>
+                                    </td>
+
+                                    <td>
+
+                                        <a
+                                            href="produtos.php?editar=<?= $produto["id"] ?>"
+                                            class="btn btn-sm btn-warning"
+                                        >
+                                            Editar
+                                        </a>
+
+                                        <a
+                                            href="produtos.php?excluir=<?= $produto["id"] ?>"
+                                            class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Tem certeza que deseja excluir este produto?');"
+                                        >
+                                            Excluir
+                                        </a>
+
+                                    </td>
+
+                                </tr>
+
+                            <?php endwhile; ?>
+
+                        <?php else: ?>
 
                             <tr>
 
-                                <td>
-                                    <?= $produto["id"] ?>
-                                </td>
+                                <td colspan="7" class="text-center">
 
-                                <td>
-                                    <?= htmlspecialchars($produto["codigo"]) ?>
-                                </td>
-
-                                <td>
-                                    <?= htmlspecialchars($produto["nome"]) ?>
-                                </td>
-
-                                <td>
-                                    <?= htmlspecialchars($produto["descricao"]) ?>
-                                </td>
-
-                                <td>
-                                    <?= number_format($produto["peso"], 2, ",", ".") ?> kg
-                                </td>
-
-                                <td>
-                                    <?= $produto["quantidade"] ?>
-                                </td>
-
-                                <td>
-
-                                    <a
-                                        href="produtos.php?editar=<?= $produto["id"] ?>"
-                                        class="btn btn-sm btn-warning"
-                                    >
-                                        Editar
-                                    </a>
-
-                                    <a
-                                        href="produtos.php?excluir=<?= $produto["id"] ?>"
-                                        class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Tem certeza que deseja excluir este produto?');"
-                                    >
-                                        Excluir
-                                    </a>
+                                    Nenhum produto encontrado.
 
                                 </td>
 
                             </tr>
 
-                        <?php endwhile; ?>
+                        <?php endif; ?>
 
                     </tbody>
 

@@ -87,10 +87,31 @@ if (isset($_POST["atualizar"])) {
     }
 }
 
-/* LISTAR ENDEREÇOS */
-$enderecos = $conexao->query(
-    "SELECT * FROM enderecos ORDER BY id DESC"
-);
+/* PESQUISA DE ENDEREÇOS */
+$pesquisa = "";
+
+if (isset($_GET["pesquisa"])) {
+    $pesquisa = trim($_GET["pesquisa"]);
+}
+
+if ($pesquisa !== "") {
+
+    $pesquisa_sql = $conexao->real_escape_string($pesquisa);
+
+    $sql = "SELECT * FROM enderecos
+            WHERE cep LIKE '%$pesquisa_sql%'
+               OR logradouro LIKE '%$pesquisa_sql%'
+               OR bairro LIKE '%$pesquisa_sql%'
+               OR cidade LIKE '%$pesquisa_sql%'
+               OR estado LIKE '%$pesquisa_sql%'
+            ORDER BY id DESC";
+
+} else {
+
+    $sql = "SELECT * FROM enderecos ORDER BY id DESC";
+}
+
+$enderecos = $conexao->query($sql);
 
 ?>
 
@@ -380,6 +401,47 @@ $enderecos = $conexao->query(
     </h2>
 
 
+    <!-- PESQUISA -->
+
+    <form method="GET" class="row g-2 mb-4">
+
+        <div class="col-md-9">
+
+            <input
+                type="text"
+                name="pesquisa"
+                class="form-control"
+                placeholder="Pesquisar por CEP, logradouro, bairro, cidade ou UF..."
+                value="<?= htmlspecialchars($pesquisa) ?>"
+            >
+
+        </div>
+
+        <div class="col-md-3 d-flex gap-2">
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Pesquisar
+            </button>
+
+            <?php if ($pesquisa !== ""): ?>
+
+                <a
+                    href="enderecos.php"
+                    class="btn btn-secondary"
+                >
+                    Limpar
+                </a>
+
+            <?php endif; ?>
+
+        </div>
+
+    </form>
+
+
     <div class="table-responsive">
 
         <table class="table table-striped table-bordered align-middle">
@@ -473,7 +535,7 @@ $enderecos = $conexao->query(
                             colspan="9"
                             class="text-center"
                         >
-                            Nenhum endereço cadastrado.
+                            Nenhum endereço encontrado.
                         </td>
 
                     </tr>

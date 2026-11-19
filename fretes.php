@@ -136,32 +136,81 @@ $produtos = $conexao->query(
     "SELECT * FROM produtos ORDER BY nome ASC"
 );
 
+
+/* PESQUISA DE FRETES */
+$pesquisa = "";
+
+if (isset($_GET["pesquisa"])) {
+    $pesquisa = trim($_GET["pesquisa"]);
+}
+
+$pesquisa_sql = $conexao->real_escape_string($pesquisa);
+
+
 /* LISTAR FRETES */
-$fretes = $conexao->query(
-    "SELECT
-        f.id,
-        f.data_frete,
-        origem.cidade AS cidade_origem,
-        destino.cidade AS cidade_destino,
-        t.nome AS transportador,
-        p.nome AS produto,
-        fp.quantidade,
-        f.valor_frete,
-        f.status,
-        f.observacoes
-    FROM fretes f
-    INNER JOIN enderecos origem
-        ON f.origem_id = origem.id
-    INNER JOIN enderecos destino
-        ON f.destino_id = destino.id
-    INNER JOIN transportadores t
-        ON f.transportador_id = t.id
-    INNER JOIN frete_produtos fp
-        ON f.id = fp.frete_id
-    INNER JOIN produtos p
-        ON fp.produto_id = p.id
-    ORDER BY f.id DESC"
-);
+
+if ($pesquisa !== "") {
+
+    $sql_fretes = "SELECT
+            f.id,
+            f.data_frete,
+            origem.cidade AS cidade_origem,
+            destino.cidade AS cidade_destino,
+            t.nome AS transportador,
+            p.nome AS produto,
+            fp.quantidade,
+            f.valor_frete,
+            f.status,
+            f.observacoes
+        FROM fretes f
+        INNER JOIN enderecos origem
+            ON f.origem_id = origem.id
+        INNER JOIN enderecos destino
+            ON f.destino_id = destino.id
+        INNER JOIN transportadores t
+            ON f.transportador_id = t.id
+        INNER JOIN frete_produtos fp
+            ON f.id = fp.frete_id
+        INNER JOIN produtos p
+            ON fp.produto_id = p.id
+        WHERE CAST(f.id AS CHAR) LIKE '%$pesquisa_sql%'
+           OR DATE_FORMAT(f.data_frete, '%d/%m/%Y') LIKE '%$pesquisa_sql%'
+           OR f.data_frete LIKE '%$pesquisa_sql%'
+           OR origem.cidade LIKE '%$pesquisa_sql%'
+           OR destino.cidade LIKE '%$pesquisa_sql%'
+           OR t.nome LIKE '%$pesquisa_sql%'
+           OR p.nome LIKE '%$pesquisa_sql%'
+           OR f.status LIKE '%$pesquisa_sql%'
+        ORDER BY f.id DESC";
+
+} else {
+
+    $sql_fretes = "SELECT
+            f.id,
+            f.data_frete,
+            origem.cidade AS cidade_origem,
+            destino.cidade AS cidade_destino,
+            t.nome AS transportador,
+            p.nome AS produto,
+            fp.quantidade,
+            f.valor_frete,
+            f.status,
+            f.observacoes
+        FROM fretes f
+        INNER JOIN enderecos origem
+            ON f.origem_id = origem.id
+        INNER JOIN enderecos destino
+            ON f.destino_id = destino.id
+        INNER JOIN transportadores t
+            ON f.transportador_id = t.id
+        INNER JOIN frete_produtos fp
+            ON f.id = fp.frete_id
+        INNER JOIN produtos p
+            ON fp.produto_id = p.id
+        ORDER BY f.id DESC";
+}
+
+$fretes = $conexao->query($sql_fretes);
 
 ?>
 
@@ -593,6 +642,48 @@ $fretes = $conexao->query(
                 Fretes cadastrados
             </h2>
 
+
+            <!-- PESQUISA -->
+
+            <form method="GET" class="row g-2 mb-4">
+
+                <div class="col-md-9">
+
+                    <input
+                        type="text"
+                        name="pesquisa"
+                        class="form-control"
+                        placeholder="Pesquisar por ID, data, origem, destino, transportador, produto ou status..."
+                        value="<?= htmlspecialchars($pesquisa) ?>"
+                    >
+
+                </div>
+
+                <div class="col-md-3 d-flex gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Pesquisar
+                    </button>
+
+                    <?php if ($pesquisa !== ""): ?>
+
+                        <a
+                            href="fretes.php"
+                            class="btn btn-secondary"
+                        >
+                            Limpar
+                        </a>
+
+                    <?php endif; ?>
+
+                </div>
+
+            </form>
+
+
             <div class="table-responsive">
 
                 <table class="table table-bordered table-striped align-middle">
@@ -692,7 +783,7 @@ $fretes = $conexao->query(
                                     colspan="10"
                                     class="text-center"
                                 >
-                                    Nenhum frete cadastrado.
+                                    Nenhum frete encontrado.
                                 </td>
 
                             </tr>

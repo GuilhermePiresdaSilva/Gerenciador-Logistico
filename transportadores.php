@@ -81,10 +81,31 @@ if (isset($_POST["atualizar"])) {
     }
 }
 
-/* LISTAR TRANSPORTADORES */
-$transportadores = $conexao->query(
-    "SELECT * FROM transportadores ORDER BY id DESC"
-);
+/* PESQUISA DE TRANSPORTADORES */
+$pesquisa = "";
+
+if (isset($_GET["pesquisa"])) {
+    $pesquisa = trim($_GET["pesquisa"]);
+}
+
+if ($pesquisa !== "") {
+
+    $pesquisa_sql = $conexao->real_escape_string($pesquisa);
+
+    $sql = "SELECT * FROM transportadores
+            WHERE nome LIKE '%$pesquisa_sql%'
+               OR documento LIKE '%$pesquisa_sql%'
+               OR telefone LIKE '%$pesquisa_sql%'
+               OR email LIKE '%$pesquisa_sql%'
+               OR veiculo LIKE '%$pesquisa_sql%'
+            ORDER BY id DESC";
+
+} else {
+
+    $sql = "SELECT * FROM transportadores ORDER BY id DESC";
+}
+
+$transportadores = $conexao->query($sql);
 
 ?>
 
@@ -340,6 +361,47 @@ $transportadores = $conexao->query(
     </h2>
 
 
+    <!-- PESQUISA -->
+
+    <form method="GET" class="row g-2 mb-4">
+
+        <div class="col-md-9">
+
+            <input
+                type="text"
+                name="pesquisa"
+                class="form-control"
+                placeholder="Pesquisar por nome, documento, telefone, e-mail ou veículo..."
+                value="<?= htmlspecialchars($pesquisa) ?>"
+            >
+
+        </div>
+
+        <div class="col-md-3 d-flex gap-2">
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Pesquisar
+            </button>
+
+            <?php if ($pesquisa !== ""): ?>
+
+                <a
+                    href="transportadores.php"
+                    class="btn btn-secondary"
+                >
+                    Limpar
+                </a>
+
+            <?php endif; ?>
+
+        </div>
+
+    </form>
+
+
     <div class="table-responsive">
 
         <table class="table table-striped table-bordered align-middle">
@@ -423,7 +485,7 @@ $transportadores = $conexao->query(
                             colspan="7"
                             class="text-center"
                         >
-                            Nenhum transportador cadastrado.
+                            Nenhum transportador encontrado.
                         </td>
 
                     </tr>
