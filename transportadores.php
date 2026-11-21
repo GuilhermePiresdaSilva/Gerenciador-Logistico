@@ -10,15 +10,37 @@ if (isset($_GET["excluir"])) {
 
     $id = intval($_GET["excluir"]);
 
-    $sql = "DELETE FROM transportadores WHERE id = $id";
+    /* VERIFICAR SE O TRANSPORTADOR ESTÁ VINCULADO A ALGUM FRETE */
+    $verificar = $conexao->query(
+        "SELECT COUNT(*) AS total
+         FROM fretes
+         WHERE transportador_id = $id"
+    );
 
-    if ($conexao->query($sql)) {
-        header("Location: transportadores.php");
-        exit;
+    $dados_verificacao = $verificar->fetch_assoc();
+
+    if ($dados_verificacao["total"] > 0) {
+
+        $erro = "Não é possível excluir este transportador porque ele está vinculado a "
+              . $dados_verificacao["total"]
+              . " frete(s). Exclua ou altere o(s) frete(s) antes de excluir o transportador.";
+
     } else {
-        $erro = "Não foi possível excluir o transportador. Ele pode estar vinculado a um frete.";
+
+        $sql = "DELETE FROM transportadores WHERE id = $id";
+
+        if ($conexao->query($sql)) {
+
+            header("Location: transportadores.php");
+            exit;
+
+        } else {
+
+            $erro = "Não foi possível excluir o transportador.";
+        }
     }
 }
+
 
 /* CADASTRAR TRANSPORTADOR */
 if (isset($_POST["cadastrar"])) {
@@ -35,10 +57,12 @@ if (isset($_POST["cadastrar"])) {
             ('$nome', '$documento', '$telefone', '$email', '$veiculo')";
 
     if ($conexao->query($sql)) {
+
         header("Location: transportadores.php");
         exit;
     }
 }
+
 
 /* EDITAR TRANSPORTADOR */
 if (isset($_GET["editar"])) {
@@ -55,6 +79,7 @@ if (isset($_GET["editar"])) {
         $transportador_edicao = $resultado_edicao->fetch_assoc();
     }
 }
+
 
 /* ATUALIZAR TRANSPORTADOR */
 if (isset($_POST["atualizar"])) {
@@ -76,15 +101,18 @@ if (isset($_POST["atualizar"])) {
             WHERE id = $id";
 
     if ($conexao->query($sql)) {
+
         header("Location: transportadores.php");
         exit;
     }
 }
 
+
 /* PESQUISA DE TRANSPORTADORES */
 $pesquisa = "";
 
 if (isset($_GET["pesquisa"])) {
+
     $pesquisa = trim($_GET["pesquisa"]);
 }
 
@@ -201,10 +229,13 @@ $transportadores = $conexao->query($sql);
         <?= $editando ? "Editar Transportador" : "Cadastro de Transportadores" ?>
     </h1>
 
+
     <?php if (isset($erro)): ?>
 
         <div class="alert alert-danger">
-            <?= $erro ?>
+
+            <?= htmlspecialchars($erro) ?>
+
         </div>
 
     <?php endif; ?>
@@ -377,6 +408,7 @@ $transportadores = $conexao->query($sql);
 
         </div>
 
+
         <div class="col-md-3 d-flex gap-2">
 
             <button
@@ -385,6 +417,7 @@ $transportadores = $conexao->query($sql);
             >
                 Pesquisar
             </button>
+
 
             <?php if ($pesquisa !== ""): ?>
 
@@ -421,6 +454,7 @@ $transportadores = $conexao->query($sql);
                 </tr>
 
             </thead>
+
 
             <tbody>
 
@@ -462,6 +496,7 @@ $transportadores = $conexao->query($sql);
                                 >
                                     ✏️ Editar
                                 </a>
+
 
                                 <a
                                     href="transportadores.php?excluir=<?= $transportador["id"] ?>"

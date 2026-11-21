@@ -10,13 +10,36 @@ if (isset($_GET["excluir"])) {
 
     $id = intval($_GET["excluir"]);
 
-    $sql = "DELETE FROM produtos WHERE id = $id";
+    // Verifica se o produto está vinculado a algum frete
+    $verificar = $conexao->query(
+        "SELECT COUNT(*) AS total
+         FROM frete_produtos
+         WHERE produto_id = $id"
+    );
 
-    if ($conexao->query($sql)) {
-        header("Location: produtos.php");
-        exit;
+    if ($verificar) {
+
+        $vinculo = $verificar->fetch_assoc();
+
+        if ($vinculo["total"] > 0) {
+
+            $erro = "Não é possível excluir este produto porque ele está vinculado a um frete. Exclua primeiro o frete relacionado.";
+
+        } else {
+
+            $sql = "DELETE FROM produtos WHERE id = $id";
+
+            if ($conexao->query($sql)) {
+                header("Location: produtos.php");
+                exit;
+            } else {
+                $erro = "Erro ao excluir produto.";
+            }
+        }
+
     } else {
-        $erro = "Não foi possível excluir o produto. Ele pode estar vinculado a um frete.";
+
+        $erro = "Não foi possível verificar se o produto está vinculado a um frete.";
     }
 }
 

@@ -10,15 +10,40 @@ if (isset($_GET["excluir"])) {
 
     $id = intval($_GET["excluir"]);
 
-    $sql = "DELETE FROM enderecos WHERE id = $id";
+    // Verifica se o endereço está vinculado a algum frete
+    $verificar = $conexao->query(
+        "SELECT COUNT(*) AS total
+         FROM fretes
+         WHERE origem_id = $id
+            OR destino_id = $id"
+    );
 
-    if ($conexao->query($sql)) {
-        header("Location: enderecos.php");
-        exit;
+    if ($verificar) {
+
+        $vinculo = $verificar->fetch_assoc();
+
+        if ($vinculo["total"] > 0) {
+
+            $erro = "Não é possível excluir este endereço porque ele está vinculado a um frete. Exclua primeiro o frete relacionado.";
+
+        } else {
+
+            $sql = "DELETE FROM enderecos WHERE id = $id";
+
+            if ($conexao->query($sql)) {
+                header("Location: enderecos.php");
+                exit;
+            } else {
+                $erro = "Não foi possível excluir o endereço.";
+            }
+        }
+
     } else {
-        $erro = "Não foi possível excluir o endereço. Ele pode estar vinculado a um frete.";
+
+        $erro = "Não foi possível verificar se o endereço está vinculado a um frete.";
     }
 }
+
 
 /* CADASTRAR ENDEREÇO */
 if (isset($_POST["cadastrar"])) {
@@ -42,6 +67,7 @@ if (isset($_POST["cadastrar"])) {
     }
 }
 
+
 /* EDITAR ENDEREÇO */
 if (isset($_GET["editar"])) {
 
@@ -57,6 +83,7 @@ if (isset($_GET["editar"])) {
         $endereco_edicao = $resultado_edicao->fetch_assoc();
     }
 }
+
 
 /* ATUALIZAR ENDEREÇO */
 if (isset($_POST["atualizar"])) {
@@ -86,6 +113,7 @@ if (isset($_POST["atualizar"])) {
         exit;
     }
 }
+
 
 /* PESQUISA DE ENDEREÇOS */
 $pesquisa = "";
